@@ -43,6 +43,8 @@ LANGUAGE SQL;
 DO $$
 DECLARE
   sql text;
+  v_from_date date := '2011-01-01'::date; /* Specify the start date */
+  v_to_date date := '2014-12-01'::date; /* Specify the end date */
 BEGIN
 FOR sql IN
 WITH sales_paf_daily_partitions AS (
@@ -52,12 +54,12 @@ SELECT
   yymm::date,
   (yymm +  INTERVAL '1 MONTH - 1 day')::date AS yymm_end
 FROM generate_series(
-  '2011-01-01'::date, /* Specify the start date */
-  '2014-12-01'::date, /* Specify the end date */
+  v_from_date,
+  v_to_date,
   '1 month') AS date_range(yymm)
 CROSS JOIN unnest(ARRAY['a','f','p']) AS types(type_code) )
 SELECT
-'DROP TABLE IF EXISTS '||partition_name||';
+'-- DROP TABLE IF EXISTS '||partition_name||';
 CREATE TABLE IF NOT EXISTS '||partition_name||' (
   CHECK ( "type"='''||type_code||''' AND belongs_to BETWEEN DATE '''||to_char(yymm,'YYYY-MM-DD')
     ||''' AND DATE '''||to_char(yymm_end,'YYYY-MM-DD')||''' )
@@ -70,16 +72,52 @@ CREATE INDEX '||partition_name||'_salestype_id_idx ON '||partition_name||' (sale
   RAISE NOTICE '== Executing: %s ...', sql;
   EXECUTE sql;
 END LOOP;
+
+WITH sales_paf_daily_partitions AS (
+SELECT 
+  sales_paf_daily_partition_name(type_code::varchar,yymm::date) AS partition_name,
+  type_code,
+  yymm::date,
+  (yymm +  INTERVAL '1 MONTH - 1 day')::date AS yymm_end
+FROM generate_series(
+  v_from_date,
+  v_to_date,
+  '1 month') AS date_range(yymm)
+CROSS JOIN unnest(ARRAY['a','f','p']) AS types(type_code) )
+SELECT string_agg(
+'IF ( NEW."type"='''||type_code||''' AND NEW.belongs_to BETWEEN DATE '''||to_char(yymm,'YYYY-MM-DD')
+    ||''' AND DATE '''||to_char(yymm_end,'YYYY-MM-DD')||''' ) THEN
+  INSERT INTO '||partition_name||' VALUES (NEW.*);', '
+ELS') INTO sql FROM sales_paf_daily_partitions;
+sql := 'CREATE OR REPLACE FUNCTION sales_paf_daily_insert_trigger()
+RETURNS TRIGGER AS $SQL$
+BEGIN ' || sql || '
+    ELSE
+        RAISE EXCEPTION ''Date out of range. Increase number of partitions!'';
+    END IF;
+    RETURN NULL;
+END;
+$SQL$
+LANGUAGE plpgsql;';
+ 
+  -- RAISE NOTICE '== Executing: % ...', sql;
+EXECUTE sql;
+
 END;$$
 
-SELECT 
-  type, 
-  belongs_to, 
-  MAX(id) max_id
-FROM sales_paf
-WHERE 
-  belongs_to = (SELECT MIN(belongs_to) FROM sales_paf) AND
-  ((SELECT MAX(last_id) FROM sales_paf_daily_log) IS NULL
-  OR id > (SELECT MAX(last_id) FROM sales_paf_daily_log)) 
-GROUP BY belongs_to, type
-ORDER BY belongs_to, 3 DESC;
+CREATE TRIGGER sales_paf_daily_insert_trigger
+  BEFORE INSERT ON sales_paf_daily
+  FOR EACH ROW EXECUTE PROCEDURE sales_paf_daily_insert_trigger();
+
+/*
+-- SELECT * FROM sales_paf_daily limit 1;
+INSERT INTO  sales_paf_daily
+(belongs_to,value,type,sales_type_id,location_id,department_id,count) 
+ VALUES
+ ('2014-01-27',208743.191503733,'f',3,1,1,2493);
+
+SELECT * FROM sales_paf_daily ORDER BY id DESC LIMIT 10;
+SELECT * FROM sales_paf_daily_f_201201 ORDER BY id DESC LIMIT 10;
+SELECT * FROM sales_paf_daily_f_201401 ORDER BY id DESC LIMIT 10;
+
+*/
