@@ -105,7 +105,7 @@ END;
 $SQL$
 LANGUAGE plpgsql;';
  
-RAISE NOTICE '== Executing: % ...', sql;
+-- RAISE NOTICE '== Executing: % ...', sql;
 EXECUTE sql;
 
 END;$$
