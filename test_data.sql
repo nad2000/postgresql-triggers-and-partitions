@@ -1,4 +1,4 @@
-﻿-- ALTER TABLE sales_paf DROP CONSTRAINT IF EXISTS sales_paf_pkey;
+-- ALTER TABLE sales_paf DROP CONSTRAINT IF EXISTS sales_paf_pkey;
 /*
 ALTER TABLE sales_paf DROP CONSTRAINT IF EXISTS fkfb0bc2e22f61b826;
 ALTER TABLE sales_paf DROP CONSTRAINT IF EXISTS fkfb0bc2e2554fc127;
@@ -35,5 +35,5 @@ CROSS JOIN generate_series( v_date, v_date + INTERVAL '13 minutes', '1 min') AS 
 
 END;$$
 
-SELECT MAX(belongs_to) FROM sales_paf;
+
 
