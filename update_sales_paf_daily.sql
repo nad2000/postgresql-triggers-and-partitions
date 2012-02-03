@@ -20,7 +20,7 @@ IF v_from_id IS NULL THEN
 END IF;
 
 SELECT belongs_to INTO v_belongs_to FROM sales_paf WHERE id = v_from_id;
-SELECT MAX(id) INTO v_to_id FROM sales_paf WHERE belongs_to = v_belongs_to AND id>v_last_id;
+SELECT MAX(id) INTO v_to_id FROM sales_paf WHERE belongs_to = v_belongs_to AND id>=v_from_id;
 
 FOREACH v_type IN ARRAY ARRAY['a','f','p'] LOOP
 
