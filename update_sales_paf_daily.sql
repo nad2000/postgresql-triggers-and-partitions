@@ -1,4 +1,4 @@
-﻿CREATE OR REPLACE FUNCTION update_sales_paf_daily() RETURNS void AS $$
+CREATE OR REPLACE FUNCTION update_sales_paf_daily() RETURNS void AS $$
 DECLARE 
   v_from_id bigint;
   v_to_id bigint;

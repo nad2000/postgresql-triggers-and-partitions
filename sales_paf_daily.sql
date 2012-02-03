@@ -1,4 +1,4 @@
-﻿DROP TABLE IF EXISTS sales_paf_daily CASCADE;
+DROP TABLE IF EXISTS sales_paf_daily CASCADE;
 CREATE TABLE sales_paf_daily
 (
   id bigserial NOT NULL PRIMARY KEY,
@@ -43,7 +43,7 @@ LANGUAGE SQL;
 DO $$
 DECLARE
   sql text;
-  v_from_date date := '2011-01-01'::date; /* Specify the start date */
+  v_from_date date := '2008-01-01'::date; /* Specify the start date */
   v_to_date date := '2014-12-01'::date; /* Specify the end date */
 BEGIN
 FOR sql IN
@@ -69,8 +69,13 @@ CREATE INDEX '||partition_name||'_dep_id_idx ON '||partition_name||' (department
 CREATE INDEX '||partition_name||'_location_id_idx ON '||partition_name||' (location_id );
 CREATE INDEX '||partition_name||'_salestype_id_idx ON '||partition_name||' (sales_type_id );
 ' FROM sales_paf_daily_partitions LOOP
-  RAISE NOTICE '== Executing: %s ...', sql;
-  EXECUTE sql;
+  -- RAISE NOTICE '== Executing: %s ...', sql;
+  BEGIN
+    EXECUTE sql;
+  EXCEPTION 
+    WHEN duplicate_table OR duplicate_object THEN
+    -- do nothing
+  END;    
 END LOOP;
 
 WITH sales_paf_daily_partitions AS (
@@ -100,7 +105,7 @@ END;
 $SQL$
 LANGUAGE plpgsql;';
  
-  -- RAISE NOTICE '== Executing: % ...', sql;
+RAISE NOTICE '== Executing: % ...', sql;
 EXECUTE sql;
 
 END;$$
