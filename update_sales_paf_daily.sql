@@ -22,7 +22,7 @@ END IF;
 SELECT belongs_to INTO v_belongs_to FROM sales_paf WHERE id = v_from_id;
 SELECT MAX(id) INTO v_to_id FROM sales_paf WHERE belongs_to = v_belongs_to AND id>=v_from_id;
 
-FOREACH v_type IN ARRAY ARRAY['a','f','p'] LOOP
+FOR v_type IN SELECT unnest AS type FROM unnest(ARRAY['a','f','p']) LOOP
 
 SELECT sales_paf_daily_partition_name(v_type,v_belongs_to) INTO v_partition_name;
 -- v_partition_name := sales_paf_daily_partition_name(v_type,v_belongs_to);
@@ -65,6 +65,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 /*
+-- DELETE FROM sales_paf_daily_log WHERE last_id > (SELECT last_id FROM sales_paf_daily_log ORDER BY last_id DESC OFFSET 3 LIMIT 1);
 -- First run:
 DO $$
 DECLARE
