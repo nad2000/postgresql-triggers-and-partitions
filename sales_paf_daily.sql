@@ -108,7 +108,7 @@ LANGUAGE plpgsql;';
 -- RAISE NOTICE '== Executing: % ...', sql;
 EXECUTE sql;
 
-END;$$
+END;$$;
 
 CREATE TRIGGER sales_paf_daily_insert_trigger
   BEFORE INSERT ON sales_paf_daily
