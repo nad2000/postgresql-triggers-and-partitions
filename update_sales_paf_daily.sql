@@ -1,3 +1,5 @@
+SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+
 CREATE OR REPLACE FUNCTION update_sales_paf_daily() RETURNS void AS $$
 DECLARE 
   v_from_id bigint;
@@ -64,12 +66,13 @@ INSERT INTO sales_paf_daily_log (last_id,belongs_to) VALUES (v_to_id, v_belongs_
 END;
 $$ LANGUAGE plpgsql;
 
-/*
 -- DELETE FROM sales_paf_daily_log WHERE last_id > (SELECT last_id FROM sales_paf_daily_log ORDER BY last_id DESC OFFSET 3 LIMIT 1);
 -- First run:
+BEGIN ISOLATION LEVEL READ UNCOMMITTED;
 DO $$
 DECLARE
   v_belongs_to date;
+  v_last_id bigint;
 BEGIN
 LOOP
   SELECT MAX(belongs_to) INTO v_belongs_to FROM sales_paf_daily_log;
@@ -77,7 +80,8 @@ LOOP
   IF v_belongs_to = (SELECT MAX(belongs_to) FROM sales_paf_daily_log) THEN
     EXIT;
   END IF;
+  SELECT MAX(last_id) INTO v_last_id FROM sales_paf_daily_log;
+  RAISE NOTICE 'Last processed ID (on %): %', now(), v_last_id;
 END LOOP;
-END;$$
-*/
-
+END;$$;
+COMMIT; 
