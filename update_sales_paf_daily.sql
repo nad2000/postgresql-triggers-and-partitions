@@ -81,7 +81,7 @@ LOOP
     EXIT;
   END IF;
   SELECT MAX(last_id) INTO v_last_id FROM sales_paf_daily_log;
-  RAISE NOTICE 'Last processed ID (on %): %', now(), v_last_id;
+  RAISE NOTICE 'Last processed ID (at %): %', now(), v_last_id;
 END LOOP;
 END;$$;
 COMMIT; 
