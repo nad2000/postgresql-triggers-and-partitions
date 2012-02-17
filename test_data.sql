@@ -13,7 +13,7 @@ DECLARE
   v_date date;
 BEGIN
 
-SELECT ( max(belongs_to)+ INTERVAL '1 day')::date INTO v_date FROM sales_paf_daily;
+SELECT COALESCE( ( max(belongs_to)+ INTERVAL '1 day')::date, NOW()) INTO v_date FROM sales_paf;
 v_date := COALESCE( v_date, now()::date );
 
 INSERT INTO sales_paf(
@@ -30,10 +30,12 @@ FROM unnest(ARRAY['a','f','p']) as t(t)
 CROSS JOIN unnest(ARRAY[1,2,3]) as bt(bt)
 CROSS JOIN unnest(ARRAY[1,2,3]) as l(l) 
 CROSS JOIN (SELECT v FROM generate_series(1,10) AS r(v) ORDER BY random()) AS r
-CROSS JOIN generate_series( v_date, v_date + INTERVAL '3 months', '1 day') AS ts(ts)
-CROSS JOIN generate_series( v_date, v_date + INTERVAL '13 minutes', '1 min') AS se(se);
+CROSS JOIN generate_series( v_date, v_date + INTERVAL '10 months', '1 day') AS ts(ts)
+CROSS JOIN generate_series( v_date, v_date + INTERVAL '33 minutes', '1 min') AS se(se);
 
-END;$$
+END;$$;
 
+/*
+SELECT min(belongs_to), max(belongs_to) FROM sales_paf;
 
-
+*/
